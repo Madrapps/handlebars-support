@@ -22,7 +22,9 @@ compileTestKotlin {
 }
 intellij {
     version '2018.2'
+    plugins 'com.dmarcotte.handlebars:182.3458.1'
 }
+
 patchPluginXml {
     changeNotes """
       Add change notes here.<br>
