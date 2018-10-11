@@ -33,15 +33,15 @@ class HbElementResolver(private val templateClass: PsiClass) {
         return null
     }
 
-    private fun MutableList<PsiClass?>.findInDepth(path: HbPath?): PsiClassReferenceType? {
+    private fun MutableList<PsiClass?>.findInDepth(path: HbPath?): PsiField? {
         if (path == null) return null
         val pathElements = path.children.filter { it.node.elementType == HbTokenTypes.ID }
-        var currentType: PsiClassReferenceType? = null
+        var currentType: PsiField? = null
         pathElements.forEachIndexed { index, psiElement ->
             currentType = if (index == 0) {
-                (findInDepth(psiElement.text)?.type as? PsiClassReferenceType)
+                findInDepth(psiElement.text)
             } else {
-                (currentType?.resolve()?.findFieldByName(psiElement.text, true)?.type as? PsiClassReferenceType)
+                (currentType?.type as? PsiClassReferenceType)?.resolve()?.findFieldByName(psiElement.text, true)
             }
         }
         return currentType
@@ -61,7 +61,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
 
             return when (hbMustacheName.name) {
                 "each" -> {
-                    val type = elementList.findInDepth(hbParam.findHbPath())
+                    val type = elementList.findInDepth(hbParam.findHbPath())?.type as? PsiClassReferenceType
                     when (type?.className) {
                         "List" -> elementList.addAndReturn((type.parameters[0] as PsiClassReferenceType).resolve())
                         "Map" -> elementList.addAndReturn((type.parameters[1] as PsiClassReferenceType).resolve())
@@ -70,7 +70,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
                 }
                 "with" -> {
                     val type = elementList.findInDepth(hbParam.findHbPath())
-                    elementList.addAndReturn(type?.resolve())
+                    elementList.addAndReturn((type?.type as? PsiClassReferenceType)?.resolve())
                 }
                 else -> elementList
             }
