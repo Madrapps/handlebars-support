@@ -43,22 +43,20 @@ class HbElementResolver(private val templateClass: PsiClass) {
                     ?: return elementList.addAndReturn(null)
             val hbParam = hbOpenBlockMustache.findChildOfType<HbParam>() ?: return elementList.addAndReturn(null)
 
-            when (hbMustacheName.name) {
+            return when (hbMustacheName.name) {
                 "each" -> {
                     val type = elementList.findInDepth(hbParam.text)?.type as? PsiClassReferenceType
-                    val typeName = type?.className
-                    if (typeName == "List") {
-                        return elementList.addAndReturn((type.parameters[0] as PsiClassReferenceType).resolve())
-                    } else if (typeName == "Map") {
-                        return elementList.addAndReturn((type.parameters[1] as PsiClassReferenceType).resolve())
+                    when (type?.className) {
+                        "List" -> elementList.addAndReturn((type.parameters[0] as PsiClassReferenceType).resolve())
+                        "Map" -> elementList.addAndReturn((type.parameters[1] as PsiClassReferenceType).resolve())
+                        else -> elementList.addAndReturn(null)
                     }
-                    return elementList.addAndReturn(null)
                 }
                 "with" -> {
                     val type = elementList.findInDepth(hbParam.text)?.type as? PsiClassReferenceType
-                    return elementList.addAndReturn(type?.resolve())
+                    elementList.addAndReturn(type?.resolve())
                 }
-                else -> return elementList
+                else -> elementList
             }
         } else {
             return mutableListOf(templateClass)
