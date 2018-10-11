@@ -5,22 +5,28 @@ package com.madrapps.handlebars
 import com.dmarcotte.handlebars.psi.*
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
 import com.intellij.psi.impl.source.PsiClassReferenceType
 
 class HbElementResolver(private val templateClass: PsiClass) {
 
     fun resolve(element: HbPsiElement): PsiElement? {
-        val parent = element.parent?.parent
-        val classes = if (parent is HbBlockWrapper) {
-            findElement(parent)
+        val classes = if (element.isBlockParameter()) {
+            element.findParentOfType<HbBlockWrapper>()?.let {
+                findElement(it)
+            } ?: mutableListOf()
         } else {
             findElement(element)
         }
-        classes.reverse()
-        classes.forEach { psiClass ->
+
+        return classes.findInDepth(element.text)
+    }
+
+    private fun MutableList<PsiClass?>.findInDepth(fieldName: String): PsiField? {
+        reversed().forEach { psiClass ->
             if (psiClass != null) {
-                val resolvedElement = psiClass.allFields.find { it.name == element.text }
-                if (resolvedElement != null) return resolvedElement
+                val field = psiClass.findFieldByName(fieldName, true)
+                if (field != null) return field
             }
         }
         return null
@@ -30,7 +36,6 @@ class HbElementResolver(private val templateClass: PsiClass) {
         val blockWrapper: HbBlockWrapper? = hbElement.findParentOfType()
         if (blockWrapper != null) {
             val elementList = findElement(blockWrapper)
-            val element = elementList.last() ?: return elementList.addAndReturn(null)
 
             val hbOpenBlockMustache = blockWrapper.findChildOfType<HbOpenBlockMustache>()
                     ?: return elementList.addAndReturn(null)
@@ -40,7 +45,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
 
             when (hbMustacheName.name) {
                 "each" -> {
-                    val type = element.findFieldByName(hbParam.text, true)?.type as? PsiClassReferenceType
+                    val type = elementList.findInDepth(hbParam.text)?.type as? PsiClassReferenceType
                     val typeName = type?.className
                     if (typeName == "List") {
                         return elementList.addAndReturn((type.parameters[0] as PsiClassReferenceType).resolve())
@@ -50,7 +55,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
                     return elementList.addAndReturn(null)
                 }
                 "with" -> {
-                    val type = element.findFieldByName(hbParam.text, true)?.type as? PsiClassReferenceType
+                    val type = elementList.findInDepth(hbParam.text)?.type as? PsiClassReferenceType
                     return elementList.addAndReturn(type?.resolve())
                 }
                 else -> return elementList
