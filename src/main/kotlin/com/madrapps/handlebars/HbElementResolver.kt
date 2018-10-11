@@ -20,7 +20,9 @@ class HbElementResolver(private val templateClass: PsiClass) {
             findElement(element)
         }
 
-        return classes.findInDepth(element.findAncestorOfType<HbPath>(), 0)
+        val position = element.childPositionInParent(HbTokenTypes.ID)
+
+        return classes.findInDepth(element.findAncestorOfType<HbPath>(), position)
     }
 
     private fun MutableList<PsiClass?>.findInDepth(fieldName: String): PsiField? {
@@ -34,7 +36,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
     }
 
     private fun MutableList<PsiClass?>.findInDepth(path: HbPath?, position: Int = 999): PsiField? {
-        if (path == null) return null
+        if (path == null || position < 0) return null
         val pathElements = path.children.filter { it.node.elementType == HbTokenTypes.ID }
 
         var currentType: PsiField? = null
