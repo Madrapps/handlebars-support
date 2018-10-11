@@ -2,6 +2,7 @@
 
 package com.madrapps.handlebars
 
+import com.dmarcotte.handlebars.parsing.HbTokenTypes
 import com.dmarcotte.handlebars.psi.*
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -12,7 +13,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
 
     fun resolve(element: HbPsiElement): PsiElement? {
         val classes = if (element.isBlockParameter()) {
-            element.findParentOfType<HbBlockWrapper>()?.let {
+            element.findAncestorOfType<HbBlockWrapper>()?.let {
                 findElement(it)
             } ?: mutableListOf()
         } else {
@@ -32,8 +33,23 @@ class HbElementResolver(private val templateClass: PsiClass) {
         return null
     }
 
+    private fun MutableList<PsiClass?>.findInDepth(path: HbPath?): PsiClassReferenceType? {
+        if (path == null) return null
+        val pathElements = path.children.filter { it.node.elementType == HbTokenTypes.ID }
+        var currentType: PsiClassReferenceType? = null
+        pathElements.forEachIndexed { index, psiElement ->
+            currentType = if (index == 0) {
+                (findInDepth(psiElement.text)?.type as? PsiClassReferenceType)
+            } else {
+                (currentType?.resolve()?.findFieldByName(psiElement.text, true)?.type as? PsiClassReferenceType)
+            }
+        }
+        return currentType
+    }
+
+
     private fun findElement(hbElement: HbPsiElement): MutableList<PsiClass?> {
-        val blockWrapper: HbBlockWrapper? = hbElement.findParentOfType()
+        val blockWrapper: HbBlockWrapper? = hbElement.findAncestorOfType()
         if (blockWrapper != null) {
             val elementList = findElement(blockWrapper)
 
@@ -45,7 +61,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
 
             return when (hbMustacheName.name) {
                 "each" -> {
-                    val type = elementList.findInDepth(hbParam.text)?.type as? PsiClassReferenceType
+                    val type = elementList.findInDepth(hbParam.findHbPath())
                     when (type?.className) {
                         "List" -> elementList.addAndReturn((type.parameters[0] as PsiClassReferenceType).resolve())
                         "Map" -> elementList.addAndReturn((type.parameters[1] as PsiClassReferenceType).resolve())
@@ -53,7 +69,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
                     }
                 }
                 "with" -> {
-                    val type = elementList.findInDepth(hbParam.text)?.type as? PsiClassReferenceType
+                    val type = elementList.findInDepth(hbParam.findHbPath())
                     elementList.addAndReturn(type?.resolve())
                 }
                 else -> elementList
