@@ -25,7 +25,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
         return classes.findInDepth(element.findAncestorOfType<HbPath>(), position)
     }
 
-    private fun findElement(hbElement: HbPsiElement): MutableList<PsiClass?> {
+    private fun findElement(hbElement: HbPsiElement): MutableList<PsiGroup?> {
         val blockWrapper: HbBlockWrapper? = hbElement.findAncestorOfType()
         if (blockWrapper != null) {
             val elementList = findElement(blockWrapper)
@@ -38,21 +38,49 @@ class HbElementResolver(private val templateClass: PsiClass) {
 
             return when (hbMustacheName.name) {
                 "each" -> {
-                    val type = elementList.findInDepth(hbParam.findHbPath())?.type as? PsiClassReferenceType
-                    when (type?.className) {
-                        "List" -> elementList.addAndReturn((type.parameters[0] as PsiClassReferenceType).resolve())
-                        "Map" -> elementList.addAndReturn((type.parameters[1] as PsiClassReferenceType).resolve())
-                        else -> elementList.addAndReturn(null)
+                    val psiField = elementList.findInDepth(hbParam.findHbPath())
+                    if (psiField != null) {
+                        val type = psiField.type as? PsiClassReferenceType
+                        when (type?.className) {
+                            "List" -> {
+                                val psiClass = (type.parameters[0] as PsiClassReferenceType).resolve()
+                                if (psiClass != null) {
+                                    elementList.addAndReturn(PsiGroup(psiField, psiClass))
+                                } else {
+                                    elementList.addAndReturn(null)
+                                }
+                            }
+                            "Map" -> {
+                                val psiClass = (type.parameters[1] as PsiClassReferenceType).resolve()
+                                if (psiClass != null) {
+                                    elementList.addAndReturn(PsiGroup(psiField, psiClass))
+                                } else {
+                                    elementList.addAndReturn(null)
+                                }
+                            }
+                            else -> elementList.addAndReturn(null)
+                        }
+                    } else {
+                        elementList.addAndReturn(null)
                     }
                 }
                 "with" -> {
-                    val type = elementList.findInDepth(hbParam.findHbPath())
-                    elementList.addAndReturn((type?.type as? PsiClassReferenceType)?.resolve())
+                    val psiField = elementList.findInDepth(hbParam.findHbPath())
+                    if (psiField != null) {
+                        val psiClass = (psiField.type as? PsiClassReferenceType)?.resolve()
+                        if (psiClass != null) {
+                            elementList.addAndReturn(PsiGroup(psiField, psiClass))
+                        } else {
+                            elementList.addAndReturn(null)
+                        }
+                    } else {
+                        elementList.addAndReturn(null)
+                    }
                 }
                 else -> elementList
             }
         } else {
-            return mutableListOf(templateClass)
+            return mutableListOf(PsiGroup(null, templateClass))
         }
     }
 
@@ -67,7 +95,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
      * element is `zero.one.two.three`, and the HbPsiElement to resolve is `two`, then the position will be 2. Note that,
      * HbPath has 7 children, but only 4 of them are of Type ID. Hence the position is 2. The position field starts with 0.
      */
-    private fun MutableList<PsiClass?>.findInDepth(path: HbPath?, position: Int = 999): PsiField? {
+    private fun MutableList<PsiGroup?>.findInDepth(path: HbPath?, position: Int = 999): PsiField? {
         if (path == null || position < 0) return null
         val pathElements = path.children.filter { it.node.elementType == HbTokenTypes.ID }
 
@@ -75,19 +103,28 @@ class HbElementResolver(private val templateClass: PsiClass) {
         for (i in 0..position) {
             currentType = if (i > pathElements.lastIndex) {
                 break
-            } else if (i == 0) {
-                findInDepth(pathElements[i].text)
             } else {
-                (currentType?.type as? PsiClassReferenceType)?.resolve()?.findFieldByName(pathElements[i].text, true)
+                val pathName = pathElements[i].text
+                if (i == 0) {
+                    if (pathName == "this") {
+                        last()?.let { (psiField, _) ->
+                            psiField
+                        }
+                    } else {
+                        findInDepth(pathName)
+                    }
+                } else {
+                    (currentType?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(pathName, true)
+                }
             }
         }
         return currentType
     }
 
-    private fun MutableList<PsiClass?>.findInDepth(fieldName: String): PsiField? {
-        reversed().forEach { psiClass ->
-            if (psiClass != null) {
-                val field = psiClass.findFieldByName(fieldName, true)
+    private fun MutableList<PsiGroup?>.findInDepth(fieldName: String): PsiField? {
+        reversed().forEach { group ->
+            if (group != null) {
+                val field = group.psiClass.findFieldByName(fieldName, true)
                 if (field != null) return field
             }
         }
@@ -100,3 +137,5 @@ private fun <E> MutableList<E>.addAndReturn(element: E): MutableList<E> {
     add(element)
     return this
 }
+
+private data class PsiGroup(val psiField: PsiField?, val psiClass: PsiClass)

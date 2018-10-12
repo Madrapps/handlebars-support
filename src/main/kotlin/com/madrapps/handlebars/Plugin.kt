@@ -3,6 +3,8 @@ package com.madrapps.handlebars
 import com.dmarcotte.handlebars.psi.HbParam
 import com.dmarcotte.handlebars.psi.HbPath
 import com.dmarcotte.handlebars.psi.HbPsiElement
+import com.intellij.psi.PsiClass
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.tree.IElementType
 
 internal inline fun <reified T> HbPsiElement.findAncestorOfType(): T? {
@@ -46,4 +48,12 @@ internal fun HbPsiElement.isBlockParameter(): Boolean {
 internal fun HbPsiElement.childPositionInParent(type: IElementType): Int {
     val filteredChildren = parent.children.filter { it.node.elementType == type }
     return filteredChildren.indexOf(this)
+}
+
+internal fun PsiClassReferenceType.resolveToClass(): PsiClass? {
+    return when (className) {
+        "List" -> (parameters[0] as PsiClassReferenceType).resolve()
+        "Map" -> (parameters[1] as PsiClassReferenceType).resolve()
+        else -> resolve()
+    }
 }
