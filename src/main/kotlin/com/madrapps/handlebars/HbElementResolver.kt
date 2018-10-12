@@ -2,7 +2,7 @@
 
 package com.madrapps.handlebars
 
-import com.dmarcotte.handlebars.parsing.HbTokenTypes
+import com.dmarcotte.handlebars.parsing.HbTokenTypes.ID
 import com.dmarcotte.handlebars.psi.*
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -20,8 +20,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
             findElement(element)
         }
 
-        val position = element.childPositionInParent(HbTokenTypes.ID)
-
+        val position = element.childPositionInParent(ID)
         return classes.findInDepth(element.findAncestorOfType<HbPath>(), position)
     }
 
@@ -65,28 +64,20 @@ class HbElementResolver(private val templateClass: PsiClass) {
      */
     private fun MutableList<PsiGroup?>.findInDepth(path: HbPath?, position: Int = 999): PsiField? {
         if (path == null || position < 0) return null
-        val pathElements = path.children.filter { it.node.elementType == HbTokenTypes.ID }
+        val segments = path.children.filter { it.node.elementType == ID }
 
-        var currentType: PsiField? = null
-        for (i in 0..position) {
-            currentType = if (i > pathElements.lastIndex) {
-                break
-            } else {
-                val pathName = pathElements[i].text
-                if (i == 0) {
-                    if (pathName == "this") {
-                        last()?.let { (psiField, _) ->
-                            psiField
-                        }
-                    } else {
-                        findInDepth(pathName)
-                    }
-                } else {
-                    (currentType?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(pathName, true)
+        var psiField: PsiField? = null
+        loop@ for (i in 0..position) {
+            psiField = when (i) {
+                segments.size -> break@loop
+                0 -> when {
+                    segments[i].text == "this" -> last()?.psiField
+                    else -> findInDepth(segments[i].text)
                 }
+                else -> (psiField?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(segments[i].text, true)
             }
         }
-        return currentType
+        return psiField
     }
 
     private fun MutableList<PsiGroup?>.findInDepth(fieldName: String): PsiField? {
