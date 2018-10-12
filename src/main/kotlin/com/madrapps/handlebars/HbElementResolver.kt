@@ -36,48 +36,16 @@ class HbElementResolver(private val templateClass: PsiClass) {
                     ?: return elementList.addAndReturn(null)
             val hbParam = hbOpenBlockMustache.findChildOfType<HbParam>() ?: return elementList.addAndReturn(null)
 
-            return when (hbMustacheName.name) {
-                "each" -> {
+            when (hbMustacheName.name) {
+                // TODO "with" behaves same as "each", but we should ensure that Lists are not possible in "with" (inspection/autocompletion)
+                "each", "with" -> {
                     val psiField = elementList.findInDepth(hbParam.findHbPath())
-                    if (psiField != null) {
-                        val type = psiField.type as? PsiClassReferenceType
-                        when (type?.className) {
-                            "List" -> {
-                                val psiClass = (type.parameters[0] as PsiClassReferenceType).resolve()
-                                if (psiClass != null) {
-                                    elementList.addAndReturn(PsiGroup(psiField, psiClass))
-                                } else {
-                                    elementList.addAndReturn(null)
-                                }
-                            }
-                            "Map" -> {
-                                val psiClass = (type.parameters[1] as PsiClassReferenceType).resolve()
-                                if (psiClass != null) {
-                                    elementList.addAndReturn(PsiGroup(psiField, psiClass))
-                                } else {
-                                    elementList.addAndReturn(null)
-                                }
-                            }
-                            else -> elementList.addAndReturn(null)
-                        }
-                    } else {
-                        elementList.addAndReturn(null)
-                    }
+                            ?: return elementList.addAndReturn(null)
+                    val type = psiField.type as? PsiClassReferenceType
+                    val psiClass = type?.resolveToClass() ?: return elementList.addAndReturn(null)
+                    return elementList.addAndReturn(PsiGroup(psiField, psiClass))
                 }
-                "with" -> {
-                    val psiField = elementList.findInDepth(hbParam.findHbPath())
-                    if (psiField != null) {
-                        val psiClass = (psiField.type as? PsiClassReferenceType)?.resolve()
-                        if (psiClass != null) {
-                            elementList.addAndReturn(PsiGroup(psiField, psiClass))
-                        } else {
-                            elementList.addAndReturn(null)
-                        }
-                    } else {
-                        elementList.addAndReturn(null)
-                    }
-                }
-                else -> elementList
+                else -> return elementList
             }
         } else {
             return mutableListOf(PsiGroup(null, templateClass))
@@ -130,7 +98,6 @@ class HbElementResolver(private val templateClass: PsiClass) {
         }
         return null
     }
-
 }
 
 private fun <E> MutableList<E>.addAndReturn(element: E): MutableList<E> {
