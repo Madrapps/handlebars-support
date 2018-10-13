@@ -12,10 +12,9 @@ import com.intellij.psi.impl.source.PsiClassReferenceType
 class HbElementResolver(private val templateClass: PsiClass) {
 
     fun resolve(element: HbPsiElement): PsiElement? {
-        val classes = if (element.isBlockParameter()) {
-            element.findAncestorOfType<HbBlockWrapper>()?.let {
-                findElement(it)
-            } ?: mutableListOf()
+        val grandParent = element.parent?.parent?.parent?.parent
+        val classes = if (grandParent is HbOpenBlockMustache) {
+            findElement(grandParent.parent as? HbPsiElement)
         } else {
             findElement(element)
         }
@@ -24,8 +23,8 @@ class HbElementResolver(private val templateClass: PsiClass) {
         return classes.findInDepth(element.findAncestorOfType<HbPath>(), position)
     }
 
-    private fun findElement(hbElement: HbPsiElement): MutableList<PsiGroup?> {
-        val blockWrapper: HbBlockWrapper? = hbElement.findAncestorOfType()
+    private fun findElement(hbElement: HbPsiElement?): MutableList<PsiGroup?> {
+        val blockWrapper: HbBlockWrapper? = hbElement?.findAncestorOfType()
         if (blockWrapper != null) {
             val elementList = findElement(blockWrapper)
 
@@ -70,11 +69,18 @@ class HbElementResolver(private val templateClass: PsiClass) {
         loop@ for (i in 0..position) {
             psiField = when (i) {
                 segments.size -> break@loop
-                0 -> when {
-                    segments[i].text == "this" -> last()?.psiField
+                0 -> when (segments[i].text) {
+                    "this" -> last()?.psiField
+                    ".." -> dropLast(1).lastOrNull()?.psiField
                     else -> findInDepth(segments[i].text)
                 }
-                else -> (psiField?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(segments[i].text, true)
+                else -> {
+                    when (segments[i].text) {
+                        "this" -> psiField
+                        ".." -> dropLast(position + 1).lastOrNull()?.psiField
+                        else -> (psiField?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(segments[i].text, true)
+                    }
+                }
             }
         }
         return psiField

@@ -33,14 +33,6 @@ internal fun HbParam.findHbPath(): HbPath? {
 }
 
 /**
- * Check if the element is a block parameter like {{#each parameter}} or {{#with parameter}}. If `parameter` is the element,
- * then this method with return `true`
- */
-internal fun HbPsiElement.isBlockParameter(): Boolean {
-    return parent?.parent?.parent is HbParam
-}
-
-/**
  * Find the position of the element in the parent. A parent can have many children, but this method returns the position
  * relative to the IElementType of the children. So if the type is ID, then only those children are considered, and the position
  * is returned based on that.
