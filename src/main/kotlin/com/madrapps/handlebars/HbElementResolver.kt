@@ -12,10 +12,9 @@ import com.intellij.psi.impl.source.PsiClassReferenceType
 class HbElementResolver(private val templateClass: PsiClass) {
 
     fun resolve(element: HbPsiElement): PsiElement? {
-        val classes = if (element.isBlockParameter()) {
-            element.findAncestorOfType<HbBlockWrapper>()?.let {
-                findElement(it)
-            } ?: mutableListOf()
+        val blockWrapperParent = element.parent?.parent?.parent?.parent?.parent
+        val classes = if (blockWrapperParent is HbBlockWrapper) {
+            findElement(blockWrapperParent)
         } else {
             findElement(element)
         }
@@ -70,11 +69,18 @@ class HbElementResolver(private val templateClass: PsiClass) {
         loop@ for (i in 0..position) {
             psiField = when (i) {
                 segments.size -> break@loop
-                0 -> when {
-                    segments[i].text == "this" -> last()?.psiField
+                0 -> when (segments[i].text) {
+                    "this" -> last()?.psiField
+                    ".." -> dropLast(1).last()?.psiField
                     else -> findInDepth(segments[i].text)
                 }
-                else -> (psiField?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(segments[i].text, true)
+                else -> {
+                    when (segments[i].text) {
+                        "this" -> psiField
+                        ".." -> dropLast(position + 100).last()?.psiField
+                        else -> (psiField?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(segments[i].text, true)
+                    }
+                }
             }
         }
         return psiField
