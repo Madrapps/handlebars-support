@@ -4,6 +4,7 @@ import com.dmarcotte.handlebars.psi.HbParam
 import com.dmarcotte.handlebars.psi.HbPath
 import com.dmarcotte.handlebars.psi.HbPsiElement
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.tree.IElementType
 
@@ -48,4 +49,12 @@ internal fun PsiClassReferenceType.resolveToClass(): PsiClass? {
         "Map" -> (parameters[1] as PsiClassReferenceType).resolve()
         else -> resolve()
     }
+}
+
+internal fun PsiElement.previousSiblingOfType(type: IElementType): PsiElement? {
+    var previous = prevSibling
+    while (previous != null && previous.node.elementType != type) {
+        previous = previous.prevSibling
+    }
+    return previous
 }

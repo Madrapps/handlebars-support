@@ -20,7 +20,12 @@ class HbElementResolver(private val templateClass: PsiClass) {
         }
 
         val position = element.childPositionInParent(ID)
-        return classes.findInDepth(element.findAncestorOfType<HbPath>(), position)
+
+        val findInDepth1 = classes.findInDepth1(element)
+
+        println("FOME -> ${findInDepth1?.name}")
+
+        return classes.findInDepth1(element)
     }
 
     private fun findElement(hbElement: HbPsiElement?): MutableList<PsiGroup?> {
@@ -37,7 +42,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
             when (hbMustacheName.name) {
                 // TODO "with" behaves same as "each", but we should ensure that Lists are not possible in "with" (inspection/autocompletion)
                 "each", "with" -> {
-                    val psiField = elementList.findInDepth(hbParam.findHbPath())
+                    val psiField = elementList.findInDepth1(hbParam.findHbPath())
                             ?: return elementList.addAndReturn(null)
                     val type = psiField.type as? PsiClassReferenceType
                     val psiClass = type?.resolveToClass() ?: return elementList.addAndReturn(null)
@@ -68,33 +73,32 @@ class HbElementResolver(private val templateClass: PsiClass) {
         var psiField: PsiField? = null
         var shouldDeepFind = false
         loop@ for (i in 0..position) {
-            psiField = when (i) {
-                segments.size -> break@loop
+            when (i) {
+                segments.size -> (break@loop)
                 0 -> when (segments[i].text) {
-                    "this" -> last()?.psiField
+                    "this" -> psiField = last()?.psiField
                     ".." -> {
                         shouldDeepFind = true
-                        dropLast(1).lastOrNull()?.psiField
+                        psiField = dropLast(1).lastOrNull()?.psiField
                     }
-                    else -> findInDepth(segments[i].text)
+                    else -> psiField = findInDepth(segments[i].text)
                 }
                 else -> {
                     when (segments[i].text) {
                         "this" -> {
                             shouldDeepFind = false
-                            psiField
+                            //psiField = psiField
                         }
                         ".." -> {
                             shouldDeepFind = true
-                            dropLast(position + 1).lastOrNull()?.psiField
+                            psiField = dropLast(position + 1).lastOrNull()?.psiField
                         }
                         else -> {
                             if (shouldDeepFind) {
                                 shouldDeepFind = false
-                                val drop = dropLast(position)
-                                drop.findInDepth(segments[i].text)
+                                psiField = dropLast(position).findInDepth(segments[i].text)
                             } else {
-                                (psiField?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(segments[i].text, true)
+                                psiField = (psiField?.type as? PsiClassReferenceType)?.resolveToClass()?.findFieldByName(segments[i].text, true)
                             }
                         }
                     }
@@ -103,6 +107,43 @@ class HbElementResolver(private val templateClass: PsiClass) {
         }
         return psiField
     }
+
+    private fun List<PsiGroup?>.findInDepth1(element: PsiElement?): PsiField? {
+        if (element == null) return null
+        fun something(psiElement: PsiElement): List<PsiGroup?> {
+            val previousSibling = psiElement.previousSiblingOfType(ID)
+            if (previousSibling != null) {
+                val classes = something(previousSibling)
+                when (previousSibling.text) {
+                    ".." -> return classes.dropLast(1)
+                    "this" -> return classes.takeLast(1)
+                    else -> {
+                        val psiField = classes.findInDepth(previousSibling.text)
+                        val psiClass = (psiField?.type as? PsiClassReferenceType)?.resolveToClass()
+                        if (psiClass != null) {
+                            return classes.toMutableList().addAndReturn(PsiGroup(psiField, psiClass))
+                        } else {
+                            return classes.toMutableList().addAndReturn(null)
+                        }
+                    }
+                }
+            } else {
+                return this
+            }
+        }
+
+        val something = something(element)
+
+        something.map {
+            println("classes -> ${it?.psiField?.name} :: ${it?.psiClass?.name}")
+        }
+        return when (element.text) {
+            ".." -> something.dropLast(1).lastOrNull()?.psiField
+            "this" -> something.lastOrNull()?.psiField
+            else -> something.findInDepth(element.text)
+        }
+    }
+
 
     private fun List<PsiGroup?>.findInDepth(fieldName: String): PsiField? {
         reversed().forEach { group ->
@@ -120,4 +161,7 @@ private fun <E> MutableList<E>.addAndReturn(element: E): MutableList<E> {
     return this
 }
 
-private data class PsiGroup(val psiField: PsiField?, val psiClass: PsiClass)
+private data class PsiGroup(val psiField: PsiField?, val psiClass: PsiClass) {
+    val element: PsiElement
+        get() = psiField ?: psiClass
+}
