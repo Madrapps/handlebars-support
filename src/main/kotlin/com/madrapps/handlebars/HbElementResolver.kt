@@ -7,6 +7,7 @@ import com.dmarcotte.handlebars.psi.*
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.impl.source.PsiClassReferenceType
 
 class HbElementResolver(private val templateClass: PsiClass) {
@@ -28,44 +29,43 @@ class HbElementResolver(private val templateClass: PsiClass) {
             val elementList = findElement(blockWrapper)
 
             val hbOpenBlockMustache = blockWrapper.findChildOfType<HbOpenBlockMustache>()
-                    ?: return elementList.addAndReturn(null)
-            val hbMustacheName = hbOpenBlockMustache.findChildOfType<HbMustacheName>()
-                    ?: return elementList.addAndReturn(null)
-            val hbParam = hbOpenBlockMustache.findChildOfType<HbParam>() ?: return elementList.addAndReturn(null)
+            val hbParam = hbOpenBlockMustache?.findChildOfType<HbParam>()
+            val hbMustacheName = hbOpenBlockMustache?.findChildOfType<HbMustacheName>()
 
-            when (hbMustacheName.name) {
+            return when (hbMustacheName?.name) {
                 // TODO "with" behaves same as "each", but we should ensure that Lists are not possible in "with" (inspection/autocompletion)
                 "each", "with" -> {
-                    val psiGroup = elementList.findInDepth(hbParam.findHbPath())
-                    return elementList.addAndReturn(psiGroup)
+                    val psiGroup = elementList.findInDepth(hbParam?.findHbPath()?.lastChild as? HbPsiElement)
+                    elementList.addAndReturn(psiGroup)
                 }
-                else -> return elementList
+                null -> elementList.addAndReturn(null)
+                else -> elementList
             }
         } else {
             return mutableListOf(PsiGroup(null, templateClass))
         }
     }
 
-    private fun List<PsiGroup?>.findInDepth(element: PsiElement?): PsiGroup? {
+    private fun List<PsiGroup?>.findInDepth(element: HbPsiElement?): PsiGroup? {
         if (element == null) return null
-        fun something(psiElement: PsiElement): List<PsiGroup?> {
+        fun find(psiElement: PsiElement): List<PsiGroup?> {
             val previousSibling = psiElement.previousSiblingOfType(ID)
-            if (previousSibling != null) {
-                val classes = something(previousSibling)
+            return if (previousSibling != null) {
+                val classes = find(previousSibling)
                 when (previousSibling.text) {
-                    ".." -> return classes.dropLast(1)
-                    "this" -> return classes.takeLast(1)
+                    ".." -> classes.dropLast(1)
+                    "this" -> classes.takeLast(1)
                     else -> {
                         val psiGroup = classes.findInDepth(previousSibling.text)
-                        return classes.toMutableList().addAndReturn(psiGroup)
+                        classes.toMutableList().addAndReturn(psiGroup)
                     }
                 }
             } else {
-                return this
+                this
             }
         }
 
-        val classes = something(element)
+        val classes = find(element)
 
         return when (element.text) {
             ".." -> classes.dropLast(1).lastOrNull()
@@ -76,14 +76,12 @@ class HbElementResolver(private val templateClass: PsiClass) {
 
     private fun List<PsiGroup?>.findInDepth(fieldName: String): PsiGroup? {
         reversed().forEach { group ->
-            if (group != null) {
-                val field = group.psiClass.findFieldByName(fieldName, true)
-                if (field != null) {
-                    val psiClass = (field.type as? PsiClassReferenceType)?.resolveToClass()
-                    if (psiClass != null) {
-                        return PsiGroup(field, psiClass)
-                    }
-                }
+            val psiField = group?.psiClass?.findFieldByName(fieldName, true)
+            val type = psiField?.type
+            if (type is PsiClassReferenceType) {
+                return PsiGroup(psiField, type.resolveToClass())
+            } else if (type is PsiPrimitiveType) {
+                return PsiGroup(psiField, null)
             }
         }
         return null
@@ -95,7 +93,7 @@ private fun <E> MutableList<E>.addAndReturn(element: E): MutableList<E> {
     return this
 }
 
-private data class PsiGroup(val psiField: PsiField?, val psiClass: PsiClass) {
-    val element: PsiElement
+private data class PsiGroup(val psiField: PsiField?, val psiClass: PsiClass?) {
+    val element: PsiElement?
         get() = psiField ?: psiClass
 }

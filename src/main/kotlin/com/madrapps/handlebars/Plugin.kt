@@ -33,16 +33,6 @@ internal fun HbParam.findHbPath(): HbPath? {
     return null
 }
 
-/**
- * Find the position of the element in the parent. A parent can have many children, but this method returns the position
- * relative to the IElementType of the children. So if the type is ID, then only those children are considered, and the position
- * is returned based on that.
- */
-internal fun HbPsiElement.childPositionInParent(type: IElementType): Int {
-    val filteredChildren = parent.children.filter { it.node.elementType == type }
-    return filteredChildren.indexOf(this)
-}
-
 internal fun PsiClassReferenceType.resolveToClass(): PsiClass? {
     return when (className) {
         "List" -> (parameters[0] as PsiClassReferenceType).resolve()
