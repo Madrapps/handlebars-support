@@ -12,65 +12,70 @@ import com.intellij.psi.impl.source.PsiClassReferenceType
 
 class HbElementResolver(private val templateClass: PsiClass) {
 
-    fun resolve(element: HbPsiElement): PsiElement? {
-        val grandParent = element.parent?.parent?.parent?.parent
-        val classes = if (grandParent is HbOpenBlockMustache) {
-            findElement(grandParent.parent as? HbPsiElement)
-        } else {
-            findElement(element)
-        }
-
-        return classes.findInDepth(element)?.element
+    fun resolveForCompletion(element: HbPsiElement): List<PsiClass> {
+        return findInBlockScope(element).findInDotScope(element).mapNotNull { it?.psiClass }
     }
 
-    private fun findElement(hbElement: HbPsiElement?): MutableList<PsiGroup?> {
-        val blockWrapper: HbBlockWrapper? = hbElement?.findAncestorOfType()
-        if (blockWrapper != null) {
-            val elementList = findElement(blockWrapper)
+    fun resolve(element: HbPsiElement): PsiElement? {
+        return findInBlockScope(element).findInDepth(element)?.element
+    }
 
-            val hbOpenBlockMustache = blockWrapper.findChildOfType<HbOpenBlockMustache>()
-            val hbParam = hbOpenBlockMustache?.findChildOfType<HbParam>()
-            val hbMustacheName = hbOpenBlockMustache?.findChildOfType<HbMustacheName>()
+    private fun findInBlockScope(element: HbPsiElement): MutableList<PsiGroup?> {
+        fun find(hbElement: HbPsiElement?): MutableList<PsiGroup?> {
+            val blockWrapper: HbBlockWrapper? = hbElement?.findAncestorOfType()
+            if (blockWrapper != null) {
+                val elementList = find(blockWrapper)
 
-            return when (hbMustacheName?.name) {
-                // TODO "with" behaves same as "each", but we should ensure that Lists are not possible in "with" (inspection/autocompletion)
-                "each", "with" -> {
-                    val psiGroup = elementList.findInDepth(hbParam?.findHbPath()?.lastChild as? HbPsiElement)
-                    elementList.addAndReturn(psiGroup)
+                val hbOpenBlockMustache = blockWrapper.findChildOfType<HbOpenBlockMustache>()
+                val hbParam = hbOpenBlockMustache?.findChildOfType<HbParam>()
+                val hbMustacheName = hbOpenBlockMustache?.findChildOfType<HbMustacheName>()
+
+                return when (hbMustacheName?.name) {
+                    // TODO "with" behaves same as "each", but we should ensure that Lists are not possible in "with" (inspection/autocompletion)
+                    "each", "with" -> {
+                        val psiGroup = elementList.findInDepth(hbParam?.findHbPath()?.lastChild as? HbPsiElement)
+                        elementList.addAndReturn(psiGroup)
+                    }
+                    null -> elementList.addAndReturn(null)
+                    else -> elementList
                 }
-                null -> elementList.addAndReturn(null)
-                else -> elementList
+            } else {
+                return mutableListOf(PsiGroup(null, templateClass))
             }
+        }
+
+        val grandParent = element.parent?.parent?.parent?.parent
+        return if (grandParent is HbOpenBlockMustache) {
+            find(grandParent.parent as? HbPsiElement)
         } else {
-            return mutableListOf(PsiGroup(null, templateClass))
+            find(element)
         }
     }
 
     private fun List<PsiGroup?>.findInDepth(element: HbPsiElement?): PsiGroup? {
         if (element == null) return null
-        fun find(psiElement: PsiElement): List<PsiGroup?> {
-            val previousSibling = psiElement.previousSiblingOfType(ID)
-            return if (previousSibling != null) {
-                val classes = find(previousSibling)
-                when (previousSibling.text) {
-                    ".." -> classes.dropLast(1)
-                    "this" -> classes.takeLast(1)
-                    else -> {
-                        val psiGroup = classes.findInDepth(previousSibling.text)
-                        classes.toMutableList().addAndReturn(psiGroup)
-                    }
-                }
-            } else {
-                this
-            }
-        }
-
-        val classes = find(element)
-
+        val classes = findInDotScope(element)
         return when (element.text) {
             ".." -> classes.dropLast(1).lastOrNull()
             "this" -> classes.lastOrNull()
             else -> classes.findInDepth(element.text)
+        }
+    }
+
+    private fun List<PsiGroup?>.findInDotScope(psiElement: PsiElement): List<PsiGroup?> {
+        val previousSibling = psiElement.previousSiblingOfType(ID)
+        return if (previousSibling != null) {
+            val classes = findInDotScope(previousSibling)
+            when (previousSibling.text) {
+                ".." -> classes.dropLast(1)
+                "this" -> classes.takeLast(1)
+                else -> {
+                    val psiGroup = classes.findInDepth(previousSibling.text)
+                    classes.toMutableList().addAndReturn(psiGroup)
+                }
+            }
+        } else {
+            this
         }
     }
 
