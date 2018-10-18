@@ -71,7 +71,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
                 "this" -> classes.takeLast(1)
                 else -> {
                     val psiGroup = classes.findInDepth(previousSibling.text)
-                    mutableListOf(psiGroup)
+                    if (psiGroup?.isCollection == false) mutableListOf(psiGroup) else emptyList()
                 }
             }
         } else {
@@ -84,7 +84,14 @@ class HbElementResolver(private val templateClass: PsiClass) {
             val psiField = group?.psiClass?.findFieldByName(fieldName, true)
             val type = psiField?.type
             if (type is PsiClassReferenceType) {
-                return PsiGroup(psiField, type.resolveToClass())
+                with(type.canonicalText) {
+                    return when {
+                        startsWith("java.lang.String") -> PsiGroup(psiField, null)
+                        startsWith("java.util.List") -> PsiGroup(psiField, type.resolveToClass(), true)
+                        startsWith("java.util.Map") -> PsiGroup(psiField, type.resolveToClass(), true)
+                        else -> PsiGroup(psiField, type.resolveToClass())
+                    }
+                }
             } else if (type is PsiPrimitiveType) {
                 return PsiGroup(psiField, null)
             }
@@ -98,7 +105,7 @@ private fun <E> MutableList<E>.addAndReturn(element: E): MutableList<E> {
     return this
 }
 
-private data class PsiGroup(val psiField: PsiField?, val psiClass: PsiClass?) {
+private data class PsiGroup(val psiField: PsiField?, val psiClass: PsiClass?, val isCollection: Boolean = false) {
     val element: PsiElement?
         get() = psiField ?: psiClass
 }
