@@ -71,7 +71,7 @@ class HbElementResolver(private val templateClass: PsiClass) {
                 "this" -> classes.takeLast(1)
                 else -> {
                     val psiGroup = classes.findInDepth(previousSibling.text)
-                    classes.toMutableList().addAndReturn(psiGroup)
+                    mutableListOf(psiGroup)
                 }
             }
         } else {

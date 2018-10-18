@@ -3,10 +3,14 @@ package com.madrapps.handlebars
 import com.dmarcotte.handlebars.psi.HbParam
 import com.dmarcotte.handlebars.psi.HbPath
 import com.dmarcotte.handlebars.psi.HbPsiElement
+import com.dmarcotte.handlebars.psi.HbPsiFile
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.tree.IElementType
+import kotlin.String as HbsFilePath
 
 internal inline fun <reified T> HbPsiElement.findAncestorOfType(): T? {
     var tempParent = this.parent
@@ -47,4 +51,12 @@ internal fun PsiElement.previousSiblingOfType(type: IElementType): PsiElement? {
         previous = previous.prevSibling
     }
     return previous
+}
+
+internal val PsiFile.classes: List<PsiClass>
+    get() = (this as PsiClassOwner).classes.toList()
+
+internal fun HbPsiFile.psiClass(fileMap: Map<HbsFilePath, PsiClass?>): PsiClass? {
+    val path = virtualFile.path
+    return fileMap[path] ?: return null
 }
