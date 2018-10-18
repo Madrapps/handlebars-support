@@ -20,10 +20,16 @@ class EachCompletionProvider {
                 val resolver = HbElementResolver(templateClass)
                 val classes = resolver.resolveForCompletion(parent)
                 val fields = classes.flatMap { it.allFields.toList() }.map {
-                    LookupElementBuilder.create(it)
+                    LookupElementBuilder.create(it).withTypeText(it.type.presentableText)
                 }
                 result.addAllElements(fields)
             }
         }
+    }
+}
+
+class GeneralCompletionProvider {
+    fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet, psiClassMap: Map<String, PsiClass?>) {
+        EachCompletionProvider().addCompletions(parameters, context, result, psiClassMap)
     }
 }
