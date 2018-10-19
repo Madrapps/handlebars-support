@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.impl.source.PsiClassReferenceType
+import org.jetbrains.kotlin.asJava.elements.KtLightMember
 
 class HbElementResolver(private val templateClass: PsiClass) {
 
@@ -17,7 +18,11 @@ class HbElementResolver(private val templateClass: PsiClass) {
     }
 
     fun resolve(element: HbPsiElement): PsiElement? {
-        return findInBlockScope(element).findInDepth(element)?.element
+        val psiElement = findInBlockScope(element).findInDepth(element)?.element
+        if (psiElement is KtLightMember<*>) {
+            return psiElement.lightMemberOrigin?.originalElement
+        }
+        return psiElement
     }
 
     private fun findInBlockScope(element: HbPsiElement): MutableList<PsiGroup?> {
