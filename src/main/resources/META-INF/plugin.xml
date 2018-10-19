@@ -14,7 +14,9 @@
     <depends>org.jetbrains.kotlin</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <editorNotificationProvider implementation="com.madrapps.handlebars.notification.ConfigureClassEditorNotificationProvider"/>
+        <projectService serviceImplementation="com.madrapps.handlebars.persistence.PersistenceService"/>
+        <editorNotificationProvider
+                implementation="com.madrapps.handlebars.notification.ConfigureClassEditorNotificationProvider"/>
     </extensions>
 
     <actions>
