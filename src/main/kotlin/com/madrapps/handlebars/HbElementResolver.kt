@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType
 class HbElementResolver(private val templateClass: PsiClass) {
 
     fun resolveForCompletion(element: HbPsiElement): List<PsiClass> {
-        return findInBlockScope(element).findInDotScope(element).mapNotNull { it?.psiClass }
+        return findInBlockScope(element).findInDotScope(element).mapNotNull { it?.psiClass }.reversed()
     }
 
     fun resolve(element: HbPsiElement): PsiElement? {
