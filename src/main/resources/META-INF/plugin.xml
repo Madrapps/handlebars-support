@@ -7,8 +7,6 @@
     Supports Go to Declaration and Auto completion for Handlebars (.hbs)<br>
     ]]></description>
 
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-         on how to target different products -->
     <depends>com.intellij.modules.lang</depends>
     <depends>com.dmarcotte.handlebars</depends>
     <depends>org.jetbrains.kotlin</depends>
@@ -17,6 +15,7 @@
         <projectService serviceImplementation="com.madrapps.handlebars.persistence.PersistenceService"/>
         <editorNotificationProvider
                 implementation="com.madrapps.handlebars.notification.ConfigureClassEditorNotificationProvider"/>
+        <psi.referenceContributor implementation="com.madrapps.handlebars.reference.HbReferenceContributor" />
     </extensions>
 
     <actions>
