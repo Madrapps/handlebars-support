@@ -11,13 +11,9 @@ class PersistenceService : PersistentStateComponent<PersistenceService> {
 
     @MapAnnotation var psiMap: HashMap<String, String?> = HashMap()
 
-    override fun getState(): PersistenceService? {
-        return this
-    }
+    override fun getState(): PersistenceService? = this
 
-    override fun loadState(service: PersistenceService) {
-        XmlSerializerUtil.copyBean(service, this);
-    }
+    override fun loadState(service: PersistenceService) = XmlSerializerUtil.copyBean(service, this)
 
     companion object {
         fun getInstance(project: Project): PersistenceService {

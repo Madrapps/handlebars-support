@@ -16,6 +16,7 @@
         <editorNotificationProvider
                 implementation="com.madrapps.handlebars.notification.ConfigureClassEditorNotificationProvider"/>
         <psi.referenceContributor implementation="com.madrapps.handlebars.reference.HbReferenceContributor" />
+        <completion.contributor implementationClass="com.madrapps.handlebars.completion.HbCompletionContributor" language="Handlebars"/>
     </extensions>
 
     <actions>
