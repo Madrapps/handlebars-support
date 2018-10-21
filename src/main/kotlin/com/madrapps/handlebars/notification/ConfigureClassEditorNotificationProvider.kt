@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import com.madrapps.handlebars.extension.HandlebarsMappingProvider.Companion.MAPPING_PROVIDER_EP_NAME
 import com.madrapps.handlebars.persistence.PersistenceService
 
 private val KEY = Key.create<EditorNotificationPanel>("hbs.associate.class")

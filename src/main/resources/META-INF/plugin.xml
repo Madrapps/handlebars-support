@@ -19,6 +19,17 @@
         <completion.contributor implementationClass="com.madrapps.handlebars.completion.HbCompletionContributor" language="Handlebars"/>
     </extensions>
 
+    <extensionPoints>
+        <extensionPoint name="handlebars.mappingProvider" interface="com.madrapps.handlebars.extension.HandlebarsMappingProvider"/>
+    </extensionPoints>
+
+    <project-components>
+        <component>
+            <implementation-class>com.madrapps.handlebars.HbProjectComponent
+            </implementation-class>
+        </component>
+    </project-components>
+
     <actions>
         <!-- Add your actions here -->
     </actions>
