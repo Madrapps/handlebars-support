@@ -8,15 +8,15 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.progress.util.ReadTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.startup.StartupManager
 import com.madrapps.handlebars.extension.HandlebarsMappingProvider.Companion.MAPPING_PROVIDER_EP_NAME
 import com.madrapps.handlebars.persistence.PersistenceService
 
-class HbProjectComponent : ProjectComponent {
+class HbProjectComponent(val project: Project?) : ProjectComponent {
 
     override fun projectOpened() {
-        println("Project opened")
-        ProjectManager.getInstance().openProjects.forEach { project ->
+        StartupManager.getInstance(project).registerPostStartupActivity {
+            println("Project opened - " + project?.name)
             if (project != null) {
                 runBackgroundProcess(project)
             }
@@ -35,7 +35,7 @@ class HbProjectComponent : ProjectComponent {
                 println("Init map")
                 val storageMap = PersistenceService.getInstance(it).psiMap
                 for (extension in MAPPING_PROVIDER_EP_NAME.extensions) {
-                    val map = extension.addHbsMapping()
+                    val map = extension.addHbsMapping(project)
                     map.forEach { key, value ->
                         storageMap.putIfAbsent(key, value)
                     }
