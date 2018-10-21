@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.madrapps'
-version '0.1.1'
+version '0.1.2'
 
 repositories {
     mavenCentral()
@@ -27,6 +27,6 @@ intellij {
 
 patchPluginXml {
     changeNotes """
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>"""
+      - Added ExtensionPoint so other plugins can configure mapping in batch. <br>
+    """
 }
