@@ -1,12 +1,9 @@
 package com.madrapps.handlebars.findusages
 
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.usageView.UsageInfo
-import com.madrapps.handlebars.persistence.PersistenceService
-import java.io.File
+import com.madrapps.handlebars.BaseTestCase
 
-class FindUsagesTest : LightCodeInsightFixtureTestCase() {
+class FindUsagesTest : BaseTestCase() {
 
     fun testAnimals() = assertSize(2)
     fun testAnimalName() = assertSize(8)
@@ -22,16 +19,8 @@ class FindUsagesTest : LightCodeInsightFixtureTestCase() {
 
     private fun testUsages(): MutableCollection<UsageInfo> {
         val testName = getTestName(false)
-        addReference("handlebar.hbs", "Jungle")
+        addReference("find_usages/handlebar.hbs", "Jungle")
         myFixture.configureByFiles("find_usages/$testName.kt", "find_usages/handlebar.hbs")
         return myFixture.testFindUsages("find_usages/$testName.kt")
     }
-
-    private fun addReference(hbsFile: String, pojoClass: String) {
-        val psiMap = ServiceManager.getService(myFixture.project, PersistenceService::class.java).psiMap
-        psiMap.clear()
-        psiMap["/src/find_usages/$hbsFile"] = pojoClass
-    }
-
-    override fun getTestDataPath(): String = File("src/test", "data").path
 }
