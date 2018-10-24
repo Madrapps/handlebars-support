@@ -81,7 +81,7 @@ class ReferenceTest : BaseTestCase() {
 
     private fun assertReference(hbsFileName: String, line: Int, column: Int, expected: String?) {
         addReference("reference/$hbsFileName", "Jungle")
-        myFixture.configureByFiles("reference/$hbsFileName", "reference/Jungle.kt")
+        myFixture.configureByFiles("reference/$hbsFileName", "Jungle.kt")
 
         myFixture.editor.caretModel.moveToVisualPosition(VisualPosition(line - 1, column - 1))
         val element = myFixture.file.findElementAt(myFixture.caretOffset)?.parent
