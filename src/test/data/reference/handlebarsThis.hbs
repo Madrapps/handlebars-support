@@ -1,10 +1,10 @@
-{{#each animals}}
-    Animal = {{animalName}}
-    Animal = {{animalNames}}
-    {{#each foods}}
-        Name = {{name}}
-        Type Name = {{type.name}}
-        {{#with type}}
+{{#each this.animals}}
+    Animal = {{this.animalName}}
+    Animal = {{this.animalNames}}
+    {{#each this.foods}}
+        Name = {{this.name}}
+        Type Name = {{this.type.name}}
+        {{#with this.type}}
             Type Name = {{this/name}}
             Food Name = {{../this.name}}
             Food Name = {{../name}}

@@ -1,5 +1,5 @@
 class Jungle {
-    var ani<caret>mals: List<Animal>? = null
+    var animals: List<Animal>? = null
 }
 
 class Animal(var animalName: String = "", var foods: List<Food>? = null) {
