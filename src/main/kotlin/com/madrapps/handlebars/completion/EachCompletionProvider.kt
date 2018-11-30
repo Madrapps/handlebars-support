@@ -14,7 +14,7 @@ import com.madrapps.handlebars.persistence.PersistenceService
 import com.madrapps.handlebars.psiClass
 
 class GeneralCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         println("addCompletions")
         val parent = parameters.position.parent
         if (parent is HbPsiElement) {

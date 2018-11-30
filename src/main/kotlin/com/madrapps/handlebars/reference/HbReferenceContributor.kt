@@ -50,9 +50,9 @@ class HbsElementReference(private val element: HbPsiElement)
         return JavaPsiFacade.getInstance(project).findClass(qualifiedName, GlobalSearchScope.allScope(project))
     }
 
-    override fun handleElementRename(newElementName: String?): PsiElement {
+    override fun handleElementRename(newElementName: String): PsiElement {
         with(element.lastChild) {
-            if (this is LeafPsiElement && newElementName != null) {
+            if (this is LeafPsiElement) {
                 replaceWithText(newElementName)
             }
         }

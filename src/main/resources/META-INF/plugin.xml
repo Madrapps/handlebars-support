@@ -2,7 +2,6 @@
     <id>com.madrapps.handlebars-support</id>
     <name>Handlebars Support</name>
     <vendor email="madrasappfactory@gmail.com" url="https://thsaravana.github.io">Madrapps</vendor>
-
     <description><![CDATA[
 <p>Additional support for <a href="http://jknack.github.io/handlebars.java/">Handlebars Java</a> template language</p>
 <p>Features</p>
