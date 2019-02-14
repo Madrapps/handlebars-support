@@ -22,8 +22,8 @@ compileTestKotlin {
 }
 
 intellij {
-    version '2019.1'
-    plugins 'com.dmarcotte.handlebars:191.4738.6', 'Kotlin'
+    version '2018.3'
+    plugins 'com.dmarcotte.handlebars:183.4139.35', 'Kotlin'
 }
 
 patchPluginXml {

@@ -15,7 +15,8 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.dmarcotte.handlebars</depends>
     <depends>org.jetbrains.kotlin</depends>
-
+    <idea-version since-build="182.3684" />
+    <version>0.1.4</version>
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="com.madrapps.handlebars.persistence.PersistenceService"/>
         <editorNotificationProvider
