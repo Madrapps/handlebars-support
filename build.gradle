@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.madrapps'
-version '0.1.5'
+version '0.1.6'
 
 repositories {
     mavenCentral()
@@ -22,11 +22,11 @@ compileTestKotlin {
 }
 
 intellij {
-    plugins 'com.dmarcotte.handlebars:191.4738.6', 'Kotlin'
+    version '2019.2'
+    plugins 'com.dmarcotte.handlebars:192.5728.12', 'Kotlin', 'java'
 }
 
 patchPluginXml {
     changeNotes """
-      - Added ExtensionPoint so other plugins can configure mapping in batch. <br>
     """
 }
