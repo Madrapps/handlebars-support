@@ -1,12 +1,21 @@
 <p align="center">
-<img src="/preview/logo.png" title="logo" width="200" height="200">
+<img src="/preview/logo.png" title="logo" width="100" height="100">
 </p>
 
 <h1 align="center">
 Handlebars Support plugin
 </h1>
 
-IntelliJ IDEA plugin to support Go to Declaration and Auto completion for Handlebars (.hbs) in projects using <a href="https://github.com/jknack/handlebars.java">Handlebars.java</a> library
+IntelliJ iDEA plugin to support Go to Declaration and Auto completion for Handlebars (.hbs) in projects using <a href="https://github.com/jknack/handlebars.java">Handlebars.java</a> library
 
+Install
+-----
+You can install the plugin from `Preferences` -> `Plugins` and search for the plugin. 
+You can also download the plugin from the <a href="https://plugins.jetbrains.com/plugin/11251-handlebars-support">intelliJ iDEA Marketplace</a>.
 
-You can find the plugin here: https://plugins.jetbrains.com/plugin/11251-handlebars-support
+Features
+-----
+- Go to Declaration from mustache fields to fields in POJO class
+- Completion for POJO class fields inside Hbs mustaches
+- Renaming of mustache will rename the POJO fields
+- Find Usages of POJO field in all hbs files
