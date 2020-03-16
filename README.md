@@ -8,6 +8,9 @@ Handlebars Support plugin
 
 IntelliJ iDEA plugin to support Go to Declaration and Auto completion for Handlebars (.hbs) in projects using <a href="https://github.com/jknack/handlebars.java">Handlebars.java</a> library
 
+<img src="https://plugins.jetbrains.com/files/11251/screenshot_18614.png" height="300"/>
+<img src="https://plugins.jetbrains.com/files/11251/screenshot_18615.png" height="300"/>
+
 Install
 -----
 You can install the plugin from `Preferences` -> `Plugins` and search for the plugin. 
