@@ -1,10 +1,10 @@
 plugins {
     id 'org.jetbrains.intellij' version '0.3.11'
-    id 'org.jetbrains.kotlin.jvm' version '1.3.10'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
 }
 
 group 'com.madrapps'
-version '0.2.0.2020.2'
+version '0.2.0.2020.3'
 
 repositories {
     mavenCentral()
@@ -22,8 +22,8 @@ compileTestKotlin {
 }
 
 intellij {
-    version '2020.2'
-    plugins 'com.dmarcotte.handlebars:202.6397.21', 'Kotlin', 'java'
+    version '2020.3'
+    plugins 'com.dmarcotte.handlebars:203.5981.30', 'Kotlin', 'java'
 }
 
 patchPluginXml {
