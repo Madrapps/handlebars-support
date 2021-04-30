@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.madrapps'
-version '0.2.0.2020.3'
+version '0.2.0.2021.1'
 
 repositories {
     mavenCentral()
@@ -22,8 +22,8 @@ compileTestKotlin {
 }
 
 intellij {
-    version '2020.3'
-    plugins 'com.dmarcotte.handlebars:203.5981.30', 'Kotlin', 'java'
+    version '2021.1'
+    plugins 'com.dmarcotte.handlebars:211.6693.44', 'Kotlin', 'java'
 }
 
 patchPluginXml {
