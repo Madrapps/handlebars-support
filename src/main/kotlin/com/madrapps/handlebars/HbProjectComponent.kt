@@ -15,9 +15,9 @@ import com.madrapps.handlebars.persistence.PersistenceService
 class HbProjectComponent(val project: Project?) : ProjectComponent {
 
     override fun projectOpened() {
-        StartupManager.getInstance(project).registerPostStartupActivity {
-            println("Project opened - " + project?.name)
-            if (project != null) {
+        if (project != null) {
+            StartupManager.getInstance(project).registerPostStartupActivity {
+                println("Project opened - " + project.name)
                 runBackgroundProcess(project)
             }
         }
@@ -27,7 +27,8 @@ class HbProjectComponent(val project: Project?) : ProjectComponent {
 
         override fun runBackgroundProcess(indicator: ProgressIndicator): Continuation {
             if (project.isDisposed) return super.runBackgroundProcess(indicator)
-            return DumbService.getInstance(project).runReadActionInSmartMode<ReadTask.Continuation> { performInReadAction(indicator) }
+            return DumbService.getInstance(project)
+                .runReadActionInSmartMode<ReadTask.Continuation> { performInReadAction(indicator) }
         }
 
         override fun performInReadAction(indicator: ProgressIndicator): Continuation? {
@@ -53,7 +54,14 @@ class HbProjectComponent(val project: Project?) : ProjectComponent {
 }
 
 private fun runBackgroundProcess(project: Project) {
-    val progressIndicator = BackgroundableProcessIndicator(project, "Adding hbs mappings", PerformInBackgroundOption.ALWAYS_BACKGROUND, null, null, false)
+    val progressIndicator = BackgroundableProcessIndicator(
+        project,
+        "Adding hbs mappings",
+        PerformInBackgroundOption.ALWAYS_BACKGROUND,
+        null,
+        null,
+        false
+    )
     progressIndicator.isIndeterminate = true
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(progressIndicator, HbProjectComponent.ReadMapTask(project))
 }
